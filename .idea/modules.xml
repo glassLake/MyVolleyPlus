@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/MyVolleyPlus.iml" filepath="$PROJECT_DIR$/MyVolleyPlus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/volleyplus/volleyplus.iml" filepath="$PROJECT_DIR$/volleyplus/volleyplus.iml" />
+    </modules>
+  </component>
+</project>
