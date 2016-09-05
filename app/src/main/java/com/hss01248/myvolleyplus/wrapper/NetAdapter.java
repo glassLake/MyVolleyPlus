@@ -1,19 +1,23 @@
 package com.hss01248.myvolleyplus.wrapper;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RetryPolicy;
 import com.hss01248.myvolleyplus.config.ConfigInfo;
+import com.hss01248.myvolleyplus.config.NetConfig;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by Administrator on 2016/9/5 0005.
  */
-public abstract class NetAdapter<T> {
+public abstract class NetAdapter<T> implements Netable{
 
+    private static final String TAG = "NetAdapter";
     public  Context context;
 
     public void initInApp(Context context){
@@ -27,9 +31,9 @@ public abstract class NetAdapter<T> {
 
 
 
-    public void sendRequest(final int method, final String urlTail, final Map map, final ConfigInfo configInfo,
+    public T sendRequest(final int method, final String urlTail, final Map map, final ConfigInfo configInfo,
                             final MyNetCallback myListener){
-        String url = CommonHelper.appendUrl(urlTail);
+        String url = CommonHelper.appendUrl(urlTail,isAppend());
 
         myListener.url = url;
 
@@ -45,7 +49,11 @@ public abstract class NetAdapter<T> {
 
 
         addToQunue(request);
+
+        return request;
     }
+
+    protected abstract boolean isAppend();
 
     protected abstract void addToQunue(T request);
 
@@ -104,7 +112,7 @@ public abstract class NetAdapter<T> {
     }
 
 
-    public abstract void cancelRequest(Object tag);
+    public abstract void cancleRequest(Object tag);
 
 
 
@@ -114,32 +122,68 @@ public abstract class NetAdapter<T> {
 
 
 
-    public void getString(String url,Map map, String tag, final MyNetCallback listener){
+    public T getString(@NonNull String url, @NonNull Map map, String tag, final MyNetCallback listener){
 
         ConfigInfo info = new ConfigInfo();
         info.tag = tag;
 
-        sendRequest(Request.Method.GET,url,map,info,listener);
+       return sendRequest(NetConfig.Method.GET,url,map,info,listener);
     }
 
 
-    public void postJsonRequest(String url,Map map, String tag, final MyNetCallback listener){
+    public T postStandardJsonResonse(@NonNull String url, @NonNull Map map, String tag, final MyNetCallback listener){
 
         ConfigInfo info = new ConfigInfo();
         info.tag = tag;
         info.resonseType = ConfigInfo.TYPE_JSON_FORMATTED;
 
-        sendRequest(Request.Method.POST,url,map,info,listener);
+        return sendRequest(NetConfig.Method.POST,url,map,info,listener);
+    }
+
+    public T getStandardJsonResonse(@NonNull String url, @NonNull Map map, String tag, final MyNetCallback listener){
+        ConfigInfo info = new ConfigInfo();
+        info.tag = tag;
+        info.resonseType = ConfigInfo.TYPE_JSON_FORMATTED;
+        return sendRequest(NetConfig.Method.GET,url,map,info,listener);
     }
 
 
 
-    public void download(String url,String savedpath,MyNetCallback<String> callback){
+    public T postCommonJsonResonse(@NonNull String url, @NonNull Map map, String tag, final MyNetCallback listener){
+
+        ConfigInfo info = new ConfigInfo();
+        info.tag = tag;
+        info.resonseType = ConfigInfo.TYPE_JSON;
+
+        return sendRequest(NetConfig.Method.POST,url,map,info,listener);
+    }
+
+    public T getCommonJsonResonse(@NonNull String url, @NonNull Map map, String tag, final MyNetCallback listener){
+        ConfigInfo info = new ConfigInfo();
+        info.tag = tag;
+        info.resonseType = ConfigInfo.TYPE_JSON;
+        return sendRequest(NetConfig.Method.GET,url,map,info,listener);
+    }
+
+
+
+    public T download(String url,String savedpath,MyNetCallback callback){
         ConfigInfo info = new ConfigInfo();
         info.tag = url;
         info.resonseType = ConfigInfo.TYPE_DOWNLOAD;
         info.filePath = savedpath;
-        sendRequest(Request.Method.POST,url,null,info,callback);
+        info.timeout = 0;
+        return  sendRequest(NetConfig.Method.GET,url,new HashMap(),info,callback);
 
+    }
+
+    @Override
+    public Object autoLogin() {
+        return null;
+    }
+
+    @Override
+    public Object autoLogin(MyNetCallback myNetListener) {
+        return null;
     }
 }

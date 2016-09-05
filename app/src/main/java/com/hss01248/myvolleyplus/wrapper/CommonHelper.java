@@ -6,6 +6,8 @@ import android.util.Log;
 import com.hss01248.myvolleyplus.config.ConfigInfo;
 import com.hss01248.myvolleyplus.config.NetBaseBean;
 import com.hss01248.myvolleyplus.config.NetConfig;
+import com.hss01248.myvolleyplus.retrofit.MyRetrofitUtil;
+import com.hss01248.myvolleyplus.retrofit.RetrofitAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -24,14 +27,19 @@ import java.util.TimerTask;
 public class CommonHelper {
 
     public static void addToken(Map map) {
-        if (map != null)
+        if (map != null){
             map.put(NetConfig.TOKEN, NetConfig.getToken());//每一个请求都传递sessionid
+        }else {
+            map = new HashMap();
+            map.put(NetConfig.TOKEN, NetConfig.getToken());//每一个请求都传递sessionid
+        }
+
     }
 
 
-    public static String appendUrl(String urlTail) {
+    public static String appendUrl(String urlTail,boolean isToAppend) {
         String url ;
-        if (urlTail.contains("http:")|| urlTail.contains("https:")){
+        if (!isToAppend || urlTail.contains("http:")|| urlTail.contains("https:")){
             url =  urlTail;
         }else {
             url = NetConfig.baseUrl+  urlTail;
@@ -155,10 +163,13 @@ public class CommonHelper {
                 myListener.onUnFound();
                 break;
             case NetBaseBean.CODE_UNLOGIN://未登录
-                MyNetUtil.autoLogin(new MyNetCallback() {
+
+                //todo
+                MyRetrofitUtil.autoLogin(new MyNetCallback() {
                     @Override
                     public void onSuccess(Object response, String resonseStr) {
-                       // sendRequest(method,  urlTail,  map,  configInfo,  myListener);
+                        // todo sendRequest(method,  urlTail,  map,  configInfo,  myListener);
+                        RetrofitAdapter.getInstance().sendRequest(method,urlTail,map,configInfo,myListener);
                     }
 
                     @Override

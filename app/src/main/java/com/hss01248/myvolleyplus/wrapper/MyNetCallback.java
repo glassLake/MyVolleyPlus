@@ -1,7 +1,7 @@
 package com.hss01248.myvolleyplus.wrapper;
 
 
-import com.hss01248.myvolleyplus.retrofit.ProgressEvent;
+import com.hss01248.myvolleyplus.retrofit.progress.ProgressEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;

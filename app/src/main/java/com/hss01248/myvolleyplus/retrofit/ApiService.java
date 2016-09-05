@@ -2,15 +2,14 @@ package com.hss01248.myvolleyplus.retrofit;
 
 import java.util.Map;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.FieldMap;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
-import retrofit2.http.Path;
 import retrofit2.http.QueryMap;
-import retrofit2.http.Streaming;
 import retrofit2.http.Url;
 
 /**
@@ -19,17 +18,22 @@ import retrofit2.http.Url;
 public interface  ApiService {
 
 
-
+    /**
+     * 注意: retrofit默认转换string成json obj,如果不需要gson转换,那么就指定泛型为ResponseBody或其子类
+     * @param url
+     * @param maps
+     * @return
+     */
     @FormUrlEncoded
-    @POST("{url}")
-    Call<String> executePost(@Path("url") String url, @FieldMap Map<String, String> maps);
+    @POST()
+    Call<ResponseBody> executePost(@Url String url, @FieldMap Map<String, String> maps);
 
-    @GET("{url}")
-    Call<String> executGet(@Path("url") String url, @QueryMap Map<String, String> maps);
+    @GET()
+    Call<ResponseBody> executGet(@Url String url, @QueryMap Map<String, String> maps);
 
-    @Streaming
+   // @Streaming
     @GET
-    Call<ProgressResponseBody> download(@Url String fileUrl);
+    Call<ResponseBody> download(@Url String fileUrl);
 
 
 

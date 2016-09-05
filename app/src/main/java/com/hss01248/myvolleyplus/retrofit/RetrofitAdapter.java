@@ -4,15 +4,21 @@ import android.util.Log;
 
 import com.hss01248.myvolleyplus.config.ConfigInfo;
 import com.hss01248.myvolleyplus.config.NetConfig;
-import com.hss01248.myvolleyplus.volley.MyVolleyUtils;
+import com.hss01248.myvolleyplus.retrofit.progress.ProgressInterceptor;
 import com.hss01248.myvolleyplus.wrapper.CommonHelper;
 import com.hss01248.myvolleyplus.wrapper.MyNetCallback;
 import com.hss01248.myvolleyplus.wrapper.NetAdapter;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -24,8 +30,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class RetrofitAdapter extends NetAdapter<Call> {
 
+    private static final String TAG = "RetrofitAdapter";
     Retrofit retrofit;
     ApiService service;
+
+
+    ApiService serviceDownload;
+    //需要单独为下载的call设置Retrofit: 主要是超时时间设置为0
+    Retrofit retrofitDownload;
 
 
 
@@ -37,7 +49,7 @@ public class RetrofitAdapter extends NetAdapter<Call> {
         OkHttpClient client=httpBuilder.readTimeout(15, TimeUnit.SECONDS)
                 .connectTimeout(10, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS) //设置超时
                 .retryOnConnectionFailure(true)//重试
-                .addInterceptor(new ProgressInterceptor())//下载时更新进度
+                //.addInterceptor(new ProgressInterceptor())//下载时更新进度
                 .build();
 
         retrofit = new Retrofit
@@ -54,11 +66,30 @@ public class RetrofitAdapter extends NetAdapter<Call> {
 
     private RetrofitAdapter(){
        init();
+       // initDownload();
+    }
+
+    private void initDownload() {
+        OkHttpClient.Builder httpBuilder=new OkHttpClient.Builder();
+        OkHttpClient client=httpBuilder.readTimeout(0, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS).writeTimeout(0, TimeUnit.SECONDS) //设置超时
+                .retryOnConnectionFailure(true)//重试
+                .addInterceptor(new ProgressInterceptor())//下载时更新进度
+                .build();
+
+        retrofitDownload = new Retrofit
+                .Builder()
+                .baseUrl(NetConfig.baseUrl)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create()) // 使用Gson作为数据转换器
+                .build();
+
+        serviceDownload = retrofitDownload.create(ApiService.class);
     }
 
     public static  RetrofitAdapter getInstance(){
         if (instance == null){
-            synchronized (MyVolleyUtils.class){
+            synchronized (RetrofitAdapter.class){
                 if (instance ==  null){
                     instance = new RetrofitAdapter();
                 }
@@ -67,6 +98,11 @@ public class RetrofitAdapter extends NetAdapter<Call> {
         return  instance;
     }
 
+
+    @Override
+    protected boolean isAppend() {
+        return false;
+    }
 
     @Override
     protected void addToQunue(Call request) {
@@ -88,21 +124,24 @@ public class RetrofitAdapter extends NetAdapter<Call> {
     @Override
     protected Call newDownloadRequest(int method, String url, Map map, final ConfigInfo configInfo, final MyNetCallback myListener) {
 
-        Call<ProgressResponseBody> call = service.download(url);
+        if (serviceDownload == null){
+            initDownload();
+        }
+        Call<ResponseBody> call = serviceDownload.download(url);
         myListener.registEventBus();
 
+        //todo 改成在子线程中执行
 
-
-        call.enqueue(new Callback<ProgressResponseBody>() {
+        call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<ProgressResponseBody> call, Response<ProgressResponseBody> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 Log.e("download","onResponse finished");
                 //开子线程将文件写到指定路径中
-                CommonHelper.writeFile(response.body().byteStream(),configInfo.filePath,myListener);
+                writeResponseBodyToDisk(response.body(),configInfo.filePath,myListener);
             }
 
             @Override
-            public void onFailure(Call<ProgressResponseBody> call, Throwable t) {
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
                 myListener.onError(t.toString());
             }
         });
@@ -114,7 +153,7 @@ public class RetrofitAdapter extends NetAdapter<Call> {
 
         Log.e("url","newStringRequest:"+url);
         //todo 分方法:
-        Call<String> call;
+        Call<ResponseBody> call;
 
         if (method == NetConfig.Method.GET){
             call = service.executGet(url,map);
@@ -126,14 +165,22 @@ public class RetrofitAdapter extends NetAdapter<Call> {
 
 
         final long time = System.currentTimeMillis();
-        call.enqueue(new Callback<String>() {
+        call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
-                CommonHelper.parseStringResponseInTime(time,response.body(),method,url,map,configInfo,myListener);
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                String string = "";
+                try {
+                    string =  response.body().string();
+                    CommonHelper.parseStringResponseInTime(time,string,method,url,map,configInfo,myListener);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    CommonHelper.parseErrorInTime(time,e.toString(),configInfo,myListener);
+                }
+
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
                 CommonHelper.parseErrorInTime(time,t.toString(),configInfo,myListener);
             }
         });
@@ -149,8 +196,71 @@ public class RetrofitAdapter extends NetAdapter<Call> {
     }
 
     @Override
-    public void cancelRequest(Object tag) {
+    public void cancleRequest(Object tag) {
+
+        if (tag instanceof  Call){
+            Call call = (Call) tag;
+            if (!call.isCanceled()){
+                call.cancel();
+            }
+
+        }
 
 
     }
+
+
+    private boolean writeResponseBodyToDisk(ResponseBody body,String path,MyNetCallback callback) {
+        try {
+            // todo change the file location/name according to your needs
+            File futureStudioIconFile = new File(path);
+
+            InputStream inputStream = null;
+            OutputStream outputStream = null;
+
+            try {
+                byte[] fileReader = new byte[4096];
+
+                long fileSize = body.contentLength();
+                long fileSizeDownloaded = 0;
+
+                inputStream = body.byteStream();
+                outputStream = new FileOutputStream(futureStudioIconFile);
+
+                while (true) {
+                    int read = inputStream.read(fileReader);
+
+                    if (read == -1) {
+                        break;
+                    }
+
+                    outputStream.write(fileReader, 0, read);
+
+                    fileSizeDownloaded += read;
+
+                    Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
+                }
+
+                outputStream.flush();
+                callback.onSuccess(path,path);
+
+                return true;
+            } catch (IOException e) {
+                callback.onError(e.toString());
+                return false;
+            } finally {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+
 }
