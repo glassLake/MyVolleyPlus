@@ -9,8 +9,8 @@ import android.content.Context;
  */
 public class NetConfig {
 
-    public static String baseUrl;
-    public static int TIME_OUT = 10;//单位为s,默认10s
+    public static String baseUrl = "http://www.qxinli.com/";
+    public static int TIME_OUT = 15000;//单位为ms,默认15s
 
     public static long CACHE_TIME = 0;//单位为s,默认无缓存
     public static int RETRY_TIME = 0;//重试次数,默认两次
@@ -23,6 +23,20 @@ public class NetConfig {
     public  static  String KEY_DATA = "data";
     public static  String KEY_CODE = "code";
     public static  String KEY_MSG = "msg";
+
+
+
+    public interface Method {
+        int DEPRECATED_GET_OR_POST = -1;
+        int GET = 0;
+        int POST = 1;
+        int PUT = 2;
+        int DELETE = 3;
+        int HEAD = 4;
+        int OPTIONS = 5;
+        int TRACE = 6;
+        int PATCH = 7;
+    }
 
 
 

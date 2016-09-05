@@ -1,8 +1,6 @@
 package com.hss01248.myvolleyplus.volley;
 
 import android.content.Context;
-import android.os.SystemClock;
-import android.text.TextUtils;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -15,23 +13,17 @@ import com.android.volley.request.MultiPartRequest;
 import com.android.volley.request.SimpleMultiPartRequest;
 import com.android.volley.toolbox.Volley;
 import com.hss01248.myvolleyplus.config.ConfigInfo;
-import com.hss01248.myvolleyplus.config.NetBaseBean;
 import com.hss01248.myvolleyplus.config.NetConfig;
+import com.hss01248.myvolleyplus.wrapper.CommonHelper;
 import com.hss01248.myvolleyplus.wrapper.MyNetCallback;
-import com.hss01248.myvolleyplus.wrapper.MyNetUtil;
-import com.hss01248.myvolleyplus.wrapper.TimerUtil;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Map;
-import java.util.TimerTask;
 
 /**
  * Created by Administrator on 2016/4/15 0015.
  */
 public class MyVolleyUtils {
-    private static final long MIN_NET_TIME = NetConfig.TIME_MINI;//访问网络到回调至少要1500ms,不足的话也要补足.主要是用于弹出dialog的效果
+
     static RequestQueue requestQueue ;
     private static MyVolleyUtils instance;
 
@@ -67,12 +59,7 @@ public class MyVolleyUtils {
 
         addToken(map);
 
-
-
-        RetryPolicy retryPolicy = generateRetryPolicy(configInfo);
-        Request.Priority priority = getPriority(configInfo.priority);
-
-        Request request = generateNewRequest(method,url,priority,map,configInfo,retryPolicy,myListener);
+        Request request = generateNewRequest(method,url,map,configInfo,myListener);
 
         setInfoToRequest(configInfo,request);
 
@@ -82,18 +69,18 @@ public class MyVolleyUtils {
         requestQueue.add(request);
     }
 
-    private Request generateNewRequest(int method, String url, Request.Priority priority, Map map,
-                                       ConfigInfo configInfo, RetryPolicy retryPolicy, MyNetCallback myListener) {
+    private Request generateNewRequest(int method, String url, Map map,
+                                       ConfigInfo configInfo, MyNetCallback myListener) {
         int requestType = configInfo.resonseType;
         switch (requestType){
             case ConfigInfo.TYPE_STRING:
             case ConfigInfo.TYPE_JSON:
             case ConfigInfo.TYPE_JSON_FORMATTED:
-                return newStringRequest(method,url,priority,map,configInfo,retryPolicy,myListener);
+                return newStringRequest(method,url,map,configInfo,myListener);
             case ConfigInfo.TYPE_DOWNLOAD:
-                return newDownloadRequest(method,url,priority,map,configInfo,retryPolicy,myListener);
+                return newDownloadRequest(method,url,map,configInfo,myListener);
             case ConfigInfo.TYPE_UPLOAD:
-                return newSingleUploadRequest(method,url,priority,map,configInfo,retryPolicy,myListener);
+                return newSingleUploadRequest(method,url,map,configInfo,myListener);
         }
         return null;
     }
@@ -110,7 +97,7 @@ public class MyVolleyUtils {
      * @param myListener
      * @return
      */
-    private Request newSingleUploadRequest(int method, String url, Request.Priority priority, Map map, ConfigInfo configInfo, RetryPolicy retryPolicy, final MyNetCallback myListener) {
+    private Request newSingleUploadRequest(int method, String url,  Map map, ConfigInfo configInfo,  final MyNetCallback myListener) {
         MultiPartRequest request = new SimpleMultiPartRequest(method, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -133,8 +120,8 @@ public class MyVolleyUtils {
         return request;
     }
 
-    private Request newDownloadRequest(int method, String url, Request.Priority priority, Map map,
-                                       final ConfigInfo configInfo, RetryPolicy retryPolicy, final MyNetCallback myListener) {
+    private Request newDownloadRequest(int method, String url,  Map map,
+                                       final ConfigInfo configInfo,  final MyNetCallback myListener) {
         //todo 文件保存路徑的生成...
 
         DownloadRequest request =
@@ -160,51 +147,25 @@ public class MyVolleyUtils {
         return request;
     }
 
-    private Request newStringRequest(final int method, final String url, Request.Priority priority,
-                                     final Map map, final ConfigInfo configInfo, RetryPolicy retryPolicy, final MyNetCallback myListener) {
+    private Request newStringRequest(final int method, final String url,
+                                     final Map map, final ConfigInfo configInfo,  final MyNetCallback myListener) {
         final long time = System.currentTimeMillis();
-        return new MyBaseStringRequest(method,url, priority,new Response.Listener<String>() {
+        return new MyBaseStringRequest(method,url, getPriority(configInfo.priority),new Response.Listener<String>() {
             @Override
             public void onResponse(final String response) {
 
 
-                long time2 = System.currentTimeMillis();
-                long gap = time2 - time;
-
-                if (configInfo.isForceMinTime && (gap < MIN_NET_TIME)){
-                    TimerUtil.doAfter(new TimerTask() {
-                        @Override
-                        public void run() {
-                            parseStringResponse(response,method,url,map,configInfo,myListener);
-                        }
-                    },(MIN_NET_TIME - gap));
-
-                }else {
-                    parseStringResponse(response,method,url,map,configInfo,myListener);
-                }
-
-
+                CommonHelper.parseStringResponseInTime(time,response,method,url,map,configInfo,myListener);
 
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(final VolleyError error) {
 
-                long time2 = System.currentTimeMillis();
-
-                long gap = time2 - time;
-
-                if (configInfo.isForceMinTime && (gap < MIN_NET_TIME)){
-                    SystemClock.sleep(MIN_NET_TIME - gap);
-                    myListener.onError(error.toString());
-                }else {
-                    myListener.onError(error.toString());
-                }
-
-
+               CommonHelper.parseErrorInTime(time,error.toString(),configInfo,myListener);
 
             }
-        },retryPolicy,map);
+        },generateRetryPolicy(configInfo),map);
     }
 
     private void setInfoToRequest(ConfigInfo configInfo,Request request) {
@@ -234,91 +195,7 @@ public class MyVolleyUtils {
         return url;
     }
 
-    private void parseStringResponse(String response, int method, String urlTail, Map map, ConfigInfo configInfo, MyNetCallback myListener) {
 
-        switch (configInfo.resonseType){
-            case ConfigInfo.TYPE_STRING:
-                myListener.onSuccess(response,response);
-                break;
-            case ConfigInfo.TYPE_JSON:{
-                JSONObject jsonObject = null;
-                try {
-                     jsonObject = new JSONObject(response);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    myListener.onError("resonse is not a Json");
-                    break;
-                }
-                myListener.onSuccess(jsonObject,response);}
-                break;
-
-            case ConfigInfo.TYPE_JSON_FORMATTED:
-                JSONObject jsonObject = null;
-                try {
-                    jsonObject = new JSONObject(response);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    myListener.onError("resonse is not a Json");
-                    break;
-                }
-                String data = jsonObject.optString(NetConfig.KEY_DATA);
-                String codeStr = jsonObject.optString(NetConfig.KEY_CODE);
-                String msg = jsonObject.optString(NetConfig.KEY_MSG);
-                int code = NetBaseBean.CODE_NONE;
-                if (TextUtils.isEmpty(codeStr) ){
-                    try {
-                        code = Integer.parseInt(codeStr);
-                    }catch (Exception e){
-
-                    }
-                }
-
-                parseStandardJsonResponse(jsonObject,response,data,code,msg, method,  urlTail,  map,  configInfo,  myListener);
-
-               // myListener.onSuccess(jsonObject,response,data,code,msg);
-                break;
-        }
-
-    }
-
-    private void parseStandardJsonResponse(JSONObject jsonObject, String response, String data, int code,
-                                           String msg, final int method, final String urlTail, final Map map,
-                                           final ConfigInfo configInfo, final MyNetCallback myListener) {
-
-        switch (code){
-            case NetBaseBean.CODE_SUCCESS://请求成功
-
-                if (TextUtils.isEmpty(data) || "[]".equals(data) || "{}".equals(data)) {
-                    myListener.onEmpty();
-
-                } else {
-                    myListener.onSuccess(response, data);
-                }
-                break;
-            case NetBaseBean.CODE_UN_FOUND://系统错误
-                myListener.onUnFound();
-                break;
-            case NetBaseBean.CODE_UNLOGIN://未登录
-                MyNetUtil.autoLogin(new MyNetCallback() {
-                    @Override
-                    public void onSuccess(Object response, String resonseStr) {
-                        sendRequest(method,  urlTail,  map,  configInfo,  myListener);
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        super.onError(error);
-                        myListener.onUnlogin();
-                    }
-                });
-                break;
-
-            default:
-                myListener.onError(response.toString());
-                break;
-        }
-
-    }
 
     private Request.Priority getPriority(int priority) {
         switch (priority){

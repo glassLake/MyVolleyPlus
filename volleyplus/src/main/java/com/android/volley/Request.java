@@ -373,6 +373,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         catch (AuthFailureError e) { }
 
         return mUrl+"method"+mMethod;
+
+       // return getUrl();
     }
 
     /**
@@ -610,7 +612,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public  boolean shouldCache() {
         
         //Allow caching only if method is a GET request
-       /* if(mMethod == Method.GET) {
+     /*   if(mMethod == Method.GET) {
             return mShouldCache & true;
         }*/
         return mShouldCache;

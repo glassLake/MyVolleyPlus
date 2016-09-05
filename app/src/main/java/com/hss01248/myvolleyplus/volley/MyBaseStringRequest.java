@@ -1,5 +1,7 @@
 package com.hss01248.myvolleyplus.volley;
 
+import android.util.Log;
+
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -23,7 +25,8 @@ public class MyBaseStringRequest extends Request<String> {
         super(method, url, listener);
     }
 
-    public MyBaseStringRequest(int method, String url, Priority priority, Response.Listener<String> successListener, Response.ErrorListener listener, RetryPolicy retryPolicy, Map map) {
+    public MyBaseStringRequest(int method, String url, Priority priority, Response.Listener<String> successListener,
+                               Response.ErrorListener listener, RetryPolicy retryPolicy, Map map) {
         super(method, url, priority, listener, retryPolicy);
 
         mListener = successListener;
@@ -45,6 +48,8 @@ public class MyBaseStringRequest extends Request<String> {
         } catch (UnsupportedEncodingException e) {
             parsed = new String(response.data);
         }
+
+        Log.e("data","parseNetworkResponse:"+parsed);
         return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
     }
 
@@ -88,6 +93,8 @@ public class MyBaseStringRequest extends Request<String> {
 
     @Override
     protected void deliverResponse(String response) {
+        Log.e("deliverResponse","deliverResponse:"+response);
+        if (mListener != null)
         mListener.onResponse(response);
     }
 }
