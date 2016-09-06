@@ -7,8 +7,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.hss01248.myvolleyplus.config.BaseNetBean;
 import com.hss01248.myvolleyplus.retrofit.RetrofitAdapter;
 import com.hss01248.myvolleyplus.volley.VolleyAdapter;
+import com.hss01248.myvolleyplus.wrapper.MyJson;
 import com.hss01248.myvolleyplus.wrapper.MyNetCallback;
 
 import org.json.JSONObject;
@@ -16,6 +18,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import butterknife.Bind;
@@ -42,12 +45,21 @@ public class MainActivity extends Activity {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button:
-                RetrofitAdapter.getInstance().getString("api/msg/unreadMsg/count/v1.json", new HashMap(), "dd", new MyNetCallback() {
+               /* RetrofitAdapter.getInstance().getString("api/msg/unreadMsg/count/v1.json", new HashMap(), "dd", new MyNetCallback() {
                     @Override
                     public void onSuccess(Object response, String resonseStr) {
                         Log.e("baidu",response.toString());
                     }
-                });
+                });*/
+
+                String obj1 = "{\"data\":null,\"code\":0}";
+                String obj2 = "{\"data\":{},\"code\":0}";
+                String obj3 = "{\"data\":[],\"code\":0}";
+
+                BaseNetBean<TestBean> netBean1 = MyJson.parseObject(obj1,BaseNetBean.class);
+                BaseNetBean<TestBean> netBean2 = MyJson.parseObject(obj2,BaseNetBean.class);
+                BaseNetBean<List<TestBean>> netBean3 = MyJson.parseObject(obj3,BaseNetBean.class);
+
                 break;
             case R.id.button2:
                 Map<String, String> map = new HashMap<String, String>();

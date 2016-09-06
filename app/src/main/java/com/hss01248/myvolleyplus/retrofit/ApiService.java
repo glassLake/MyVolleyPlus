@@ -12,6 +12,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.QueryMap;
+import retrofit2.http.Streaming;
 import retrofit2.http.Url;
 
 /**
@@ -21,7 +22,11 @@ public interface  ApiService {
 
 
     /**
-     * 注意: retrofit默认转换string成json obj,如果不需要gson转换,那么就指定泛型为ResponseBody,只能是ResponseBody,子类都不行,同理,下载上传时,也必须指定泛型为ResponseBody
+     * 注意:
+     * 1.retrofit默认转换string成json obj,如果不需要gson转换,那么就指定泛型为ResponseBody,
+     *  只能是ResponseBody,子类都不行,同理,下载上传时,也必须指定泛型为ResponseBody
+     * 2. map不能为null,否则该请求不会执行,但可以size为空
+     * 3使用@url,而不是@Path注解,后者放到方法体上,会强制先urlencode,然后与baseurl拼接,请求无法成功
      * @param url
      * @param maps
      * @return
@@ -33,7 +38,7 @@ public interface  ApiService {
     @GET()
     Call<ResponseBody> executGet(@Url String url, @QueryMap Map<String, String> maps);
 
-   // @Streaming
+    @Streaming //流式下载,不加这个注解的话,会整个文件字节数组全部加载进内存,可能导致oom
     @GET
     Call<ResponseBody> download(@Url String fileUrl);
 

@@ -57,38 +57,9 @@ public class RetrofitUtil2 {
             @Override
             public void onResponse(Call<BaseNetBean<E>> call, Response<BaseNetBean<E>> response) {
                 BaseNetBean<E> baseBean = response.body();
-                switch (baseBean.code){
-                    case BaseNetBean.CODE_SUCCESS://请求成功
 
-                        if (baseBean.data == null) {
-                            myListener.onEmpty();
+                CommonHelper.parseStandardJsonObj(baseBean,urlTail,params,myListener,RetrofitUtil2.this);
 
-                        } else {
-                            myListener.onSuccess(baseBean.data,"");
-                        }
-                        break;
-                    case BaseNetBean.CODE_UN_FOUND://没有找到内容
-                        myListener.onUnFound();
-                        break;
-                    case BaseNetBean.CODE_UNLOGIN://未登录
-                        autoLogin(new MyNetCallback() {
-                            @Override
-                            public void onSuccess(Object response, String resonseStr) {
-                                postStandard(urlTail,params,myListener);
-                            }
-
-                            @Override
-                            public void onError(String error) {
-                                super.onError(error);
-                                myListener.onUnlogin();
-                            }
-                        });
-                        break;
-
-                    default:
-                        myListener.onError("code:"+baseBean.code + ", msg:"+baseBean.msg);
-                        break;
-                }
             }
 
             @Override

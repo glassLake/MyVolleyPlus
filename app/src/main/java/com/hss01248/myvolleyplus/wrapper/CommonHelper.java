@@ -3,11 +3,12 @@ package com.hss01248.myvolleyplus.wrapper;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.hss01248.myvolleyplus.config.ConfigInfo;
 import com.hss01248.myvolleyplus.config.BaseNetBean;
+import com.hss01248.myvolleyplus.config.ConfigInfo;
 import com.hss01248.myvolleyplus.config.NetConfig;
 import com.hss01248.myvolleyplus.retrofit.MyRetrofitUtil;
 import com.hss01248.myvolleyplus.retrofit.RetrofitAdapter;
+import com.hss01248.myvolleyplus.retrofit.RetrofitUtil2;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -152,7 +154,8 @@ public class CommonHelper {
         switch (code){
             case BaseNetBean.CODE_SUCCESS://请求成功
 
-                if (TextUtils.isEmpty(data) || "[]".equals(data) || "{}".equals(data)) {
+                if (TextUtils.isEmpty(data) || "[]".equals(data)
+                        || "{}".equals(data) || "null".equals(data)) {//注意: 如果json里该字段返回null,那么optString拿到的就是字符化的"null"
                     myListener.onEmpty();
 
                 } else {
@@ -188,14 +191,60 @@ public class CommonHelper {
     }
 
 
-    public static void parseStandardJsonObj(){
+    public static <E> void parseStandardJsonObj(BaseNetBean<E> baseBean, final String urlTail,
+                                                final Map<String, String> params, final MyNetCallback<E> myListener,
+                                                final RetrofitUtil2 retrofitUtil2){
+        switch (baseBean.code){
+            case BaseNetBean.CODE_SUCCESS://请求成功
 
+                /*{}: LinkedTreeMap, size = 0  会被解析成一个空对象
+                [] ArrayList sieze=0 会被解析成一个空的list
+                * */
+                if (baseBean.data == null ) {//如果是{}或[]呢?data是否会为空?
+                    myListener.onEmpty();
+                } else {
+
+                    if (baseBean.data instanceof List){
+                        List data = (List) baseBean.data;
+                        if (data.size() == 0){
+                            myListener.onEmpty();
+                        }else {
+                            myListener.onSuccess(baseBean.data,"");
+                        }
+                    }else {
+                        myListener.onSuccess(baseBean.data,"");//todo 空怎么搞?
+                    }
+
+
+
+                }
+                break;
+            case BaseNetBean.CODE_UN_FOUND://没有找到内容
+                myListener.onUnFound();
+                break;
+            case BaseNetBean.CODE_UNLOGIN://未登录
+                retrofitUtil2.autoLogin(new MyNetCallback() {
+                    @Override
+                    public void onSuccess(Object response, String resonseStr) {
+                        retrofitUtil2.postStandard(urlTail,params,myListener);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        super.onError(error);
+                        myListener.onUnlogin();
+                    }
+                });
+                break;
+
+            default:
+                myListener.onError("code:"+baseBean.code + ", msg:"+baseBean.msg);
+                break;
+        }
     }
 
 
     public static boolean writeFile(final InputStream is, final String path,final MyNetCallback callback){
-
-
         try {
             // todo change the file location/name according to your needs
             File futureStudioIconFile = new File(path);
