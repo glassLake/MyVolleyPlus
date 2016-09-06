@@ -4,7 +4,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.hss01248.myvolleyplus.config.ConfigInfo;
-import com.hss01248.myvolleyplus.config.NetBaseBean;
+import com.hss01248.myvolleyplus.config.BaseNetBean;
 import com.hss01248.myvolleyplus.config.NetConfig;
 import com.hss01248.myvolleyplus.retrofit.MyRetrofitUtil;
 import com.hss01248.myvolleyplus.retrofit.RetrofitAdapter;
@@ -127,7 +127,7 @@ public class CommonHelper {
                 String data = jsonObject.optString(NetConfig.KEY_DATA);
                 String codeStr = jsonObject.optString(NetConfig.KEY_CODE);
                 String msg = jsonObject.optString(NetConfig.KEY_MSG);
-                int code = NetBaseBean.CODE_NONE;
+                int code = BaseNetBean.CODE_NONE;
                 if (!TextUtils.isEmpty(codeStr) ){
                     try {
                         code = Integer.parseInt(codeStr);
@@ -150,7 +150,7 @@ public class CommonHelper {
                                            final ConfigInfo configInfo, final MyNetCallback myListener) {
 
         switch (code){
-            case NetBaseBean.CODE_SUCCESS://请求成功
+            case BaseNetBean.CODE_SUCCESS://请求成功
 
                 if (TextUtils.isEmpty(data) || "[]".equals(data) || "{}".equals(data)) {
                     myListener.onEmpty();
@@ -159,10 +159,10 @@ public class CommonHelper {
                     myListener.onSuccess(jsonObject,response,data,code,msg );
                 }
                 break;
-            case NetBaseBean.CODE_UN_FOUND://没有找到内容
+            case BaseNetBean.CODE_UN_FOUND://没有找到内容
                 myListener.onUnFound();
                 break;
-            case NetBaseBean.CODE_UNLOGIN://未登录
+            case BaseNetBean.CODE_UNLOGIN://未登录
 
                 //todo
                 MyRetrofitUtil.autoLogin(new MyNetCallback() {
@@ -184,6 +184,11 @@ public class CommonHelper {
                 myListener.onError(response.toString());
                 break;
         }
+
+    }
+
+
+    public static void parseStandardJsonObj(){
 
     }
 

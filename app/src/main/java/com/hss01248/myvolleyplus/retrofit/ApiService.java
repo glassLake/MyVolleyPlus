@@ -1,5 +1,7 @@
 package com.hss01248.myvolleyplus.retrofit;
 
+import com.hss01248.myvolleyplus.config.BaseNetBean;
+
 import java.util.Map;
 
 import okhttp3.ResponseBody;
@@ -19,7 +21,7 @@ public interface  ApiService {
 
 
     /**
-     * 注意: retrofit默认转换string成json obj,如果不需要gson转换,那么就指定泛型为ResponseBody或其子类
+     * 注意: retrofit默认转换string成json obj,如果不需要gson转换,那么就指定泛型为ResponseBody,只能是ResponseBody,子类都不行,同理,下载上传时,也必须指定泛型为ResponseBody
      * @param url
      * @param maps
      * @return
@@ -34,6 +36,18 @@ public interface  ApiService {
    // @Streaming
     @GET
     Call<ResponseBody> download(@Url String fileUrl);
+
+
+    /**
+     * 标准格式的json(data,msg,code)解析:泛型嵌套
+     * */
+    @FormUrlEncoded
+    @POST()
+    <T>  Call<BaseNetBean<T>> postStandradJson(@Url String url, @FieldMap Map<String, String> maps);
+
+    @GET()
+    <T>  Call<BaseNetBean<T>> getStandradJson(@Url String url, @QueryMap Map<String, String> maps);
+
 
 
 
