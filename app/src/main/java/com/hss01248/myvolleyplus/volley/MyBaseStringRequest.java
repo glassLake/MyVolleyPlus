@@ -48,7 +48,7 @@ public class MyBaseStringRequest extends Request<String> {
         } catch (UnsupportedEncodingException e) {
             parsed = new String(response.data);
         }
-
+        reSetCacheControl(response);
         Log.e("data","parseNetworkResponse:"+parsed);
         return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
     }
@@ -96,5 +96,43 @@ public class MyBaseStringRequest extends Request<String> {
         Log.e("deliverResponse","deliverResponse:"+response);
         if (mListener != null)
         mListener.onResponse(response);
+    }
+
+
+    public void setRequestHeadCacheTime(int timeInSecond){
+        try {
+            getHeaders().put("Cache-Control","max-age="+timeInSecond);
+        } catch (AuthFailureError authFailureError) {
+            authFailureError.printStackTrace();
+        }
+
+    }
+
+    long cacheTime;//毫秒
+
+    public boolean isFromCache = false;
+    public int cacheHitCount = 0;
+
+    @Override  //怎么判断是从缓存中取的还是从网络上取的?
+    public void addMarker(String tag) {
+        super.addMarker(tag);
+        if ("cache-hit".equals(tag)){
+            cacheHitCount++;
+        }else if ("cache-hit-parsed".equals(tag)){
+            cacheHitCount++;
+        }
+
+        if (cacheHitCount == 2){
+            isFromCache = true;
+        }
+    }
+
+    private void reSetCacheControl(NetworkResponse response) {
+        this.setShouldCache(true);//重置cache开关
+        if (!isFromCache){
+            Map<String, String> headers = response.headers;
+            headers.put("Cache-Control","max-age="+cacheTime);
+        }
+
     }
 }

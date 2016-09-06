@@ -25,7 +25,9 @@ public class NetConfig {
     public static  String KEY_MSG = "msg";
 
 
-
+    /**
+     * copy自volley
+     */
     public interface Method {
         int DEPRECATED_GET_OR_POST = -1;
         int GET = 0;
