@@ -54,31 +54,7 @@ public class MyBaseStringRequest extends Request<String> {
     }
 
 
-    /**
-     * 缓存key的生成规则:url+body
-     * @return
-     */
-    @Override
-    public String getCacheKey() {
-        String bodyStr = "";
-        try {
 
-            byte[]   body = getBody();
-            bodyStr = new String(body,"UTF-8");
-        } catch (AuthFailureError authFailureError) {
-            authFailureError.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        if (bodyStr != null){
-            return super.getCacheKey()+bodyStr;
-        }else {
-            return super.getCacheKey();
-        }
-
-
-    }
 
 
     @Override
@@ -108,6 +84,8 @@ public class MyBaseStringRequest extends Request<String> {
 
     }
 
+    //todo 用依赖注入改写
+
     long cacheTime;//毫秒
 
     public boolean isFromCache = false;
@@ -133,6 +111,32 @@ public class MyBaseStringRequest extends Request<String> {
             Map<String, String> headers = response.headers;
             headers.put("Cache-Control","max-age="+cacheTime);
         }
+
+    }
+
+    /**
+     * 缓存key的生成规则:url+body
+     * @return
+     */
+    @Override
+    public String getCacheKey() {
+        String bodyStr = "";
+        try {
+
+            byte[]   body = getBody();
+            bodyStr = new String(body,"UTF-8");
+        } catch (AuthFailureError authFailureError) {
+            authFailureError.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        if (bodyStr != null){
+            return super.getCacheKey()+bodyStr;
+        }else {
+            return super.getCacheKey();
+        }
+
 
     }
 }
