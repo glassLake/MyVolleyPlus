@@ -350,32 +350,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return mUrl;
     }
 
-    /**
-     * Returns the cache key for this request.
-     *
-     * detemained by mUrl, params,method
-     */
-    public String getCacheKey() {
 
-        try {
-            if(getParams() != null && getParams().size() != 0){
-                String encodedParams = getEncodedUrlParams();
-                String extra = "";
-                if (encodedParams != null && encodedParams.length() > 0) {
-                    if (!mUrl.endsWith("?")) {
-                        extra += "?";
-                    }
-                    extra += encodedParams;
-                }
-                return mUrl + extra+"method"+mMethod;
-            }
-        }
-        catch (AuthFailureError e) { }
-
-        return mUrl+"method"+mMethod;
-
-       // return getUrl();
-    }
 
     /**
      * Annotates this request with an entry retrieved for it from cache.
@@ -606,17 +581,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return this;
     }
 
-    /**
-     * Returns true if responses to this request should be cached.
-     */
-    public  boolean shouldCache() {
-        
-        //Allow caching only if method is a GET request
-     /*   if(mMethod == Method.GET) {
-            return mShouldCache & true;
-        }*/
-        return mShouldCache;
-    }
+
 
     /**
      * Sets whether or not the request should be retried in the event of an HTTP 5xx (server) error.
@@ -777,6 +742,49 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public final boolean shouldOverridePatch() {
         return mShouldOverridePatch;
+    }
+
+
+
+    //todo 下方为相对于原框架修改过的.被注释掉的是原框架代码
+    /**
+     * Returns the cache key for this request.
+     *
+     * detemained by mUrl, params,method
+     */
+    public String getCacheKey() {
+
+        try {
+            if(getParams() != null && getParams().size() != 0){
+                String encodedParams = getEncodedUrlParams();
+                String extra = "";
+                if (encodedParams != null && encodedParams.length() > 0) {
+                    if (!mUrl.endsWith("?")) {
+                        extra += "?";
+                    }
+                    extra += encodedParams;
+                }
+                return mUrl + extra+"method"+mMethod;
+            }
+        }
+        catch (AuthFailureError e) { }
+
+        return mUrl+"method"+mMethod;
+
+        // return getUrl();
+    }
+
+
+    /**
+     * Returns true if responses to this request should be cached.
+     */
+    public  boolean shouldCache() {
+
+        //Allow caching only if method is a GET request
+     /*   if(mMethod == Method.GET) {
+            return mShouldCache & true;
+        }*/
+        return mShouldCache;
     }
 
 }
