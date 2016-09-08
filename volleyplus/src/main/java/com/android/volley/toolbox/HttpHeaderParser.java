@@ -16,18 +16,17 @@
 
 package com.android.volley.toolbox;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Map;
+import android.graphics.Bitmap;
+
+import com.android.volley.Cache;
+import com.android.volley.NetworkResponse;
 
 import org.apache.http.impl.cookie.DateParseException;
 import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.protocol.HTTP;
 
-import android.graphics.Bitmap;
-import android.support.v4.util.ArrayMap;
-
-import com.android.volley.Cache;
-import com.android.volley.NetworkResponse;
+import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
 /**
  * Utility methods for parsing HTTP headers.

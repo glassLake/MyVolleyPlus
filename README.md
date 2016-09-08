@@ -10,6 +10,10 @@ fork from [VolleyPlus](https://github.com/DWorkS/VolleyPlus)
 
 修改Request基类中getCacheKey()和shouldCache()方法内部逻辑,取消原项目中只允许get请求缓存的限制.方便后续实现 完全的客户端控制的缓存.
 
+## 1.0.1
+
+移除对support:appcompat和gson的依赖,移除图片加载模块相关的类.以缩减依赖包大小(已由原先2M多缩减到164k).
+
 
 
 # Usage
@@ -33,7 +37,7 @@ Add it in your root build.gradle at the end of repositories:
 
 ```
 	dependencies {
-	        compile 'com.github.glassLake:MyVolleyPlus:1.0.0'
+	        compile 'com.github.glassLake:MyVolleyPlus:1.0.1'
 	}
 ```
 

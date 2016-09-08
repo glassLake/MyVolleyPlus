@@ -1,14 +1,10 @@
 package com.android.volley.error;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import android.content.Context;
 
 import com.android.volley.NetworkResponse;
 import com.android.volley.R;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+
 
 public class VolleyErrorHelper {
 
@@ -97,13 +93,13 @@ public class VolleyErrorHelper {
 					// server might return error like this { "error":
 					// "Some error occured" }
 					// Use "Gson" to parse the result
-					HashMap<String, String> result = new Gson().fromJson(new String(response.data),
-							new TypeToken<Map<String, String>>() { }.getType());
+					/*HashMap<String, String> result = new Gson().fromJson(new String(response.data),
+							new TypeToken<Map<String, String>>() { }.getType());*/
 
-					if (result != null && result.containsKey("error")) {
+					/*if (result != null && result.containsKey("error")) {
 						return result.get("error");
-					}
-
+					}*/
+					return "net error:"+ response.statusCode;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
